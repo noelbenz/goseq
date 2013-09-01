@@ -1,16 +1,15 @@
-package main
+package goseq
 
 import (
-    "io"
-    "bufio"
+	"bufio"
+	"io"
 )
 
 type PingResponse struct {
-    header  byte
+	header byte
 }
 
 func (r *PingResponse) Read(stream io.Reader) error {
-    header, err := NewReader(PingResponse).ReadByte()
-    return err
+	header, err := NewReader(PingResponse).ReadByte()
+	return err
 }
-// ALAKFJE
