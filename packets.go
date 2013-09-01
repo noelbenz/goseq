@@ -13,3 +13,4 @@ func (r *PingResponse) Read(stream io.Reader) error {
     header, err := NewReader(PingResponse).ReadByte()
     return err
 }
+// ALAKFJE
