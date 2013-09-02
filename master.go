@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"reflect"
 	"time"
 )
 
@@ -200,14 +201,14 @@ func (m *master) Query(at string) ([]Server, error) {
 	}
 
 	resp := wireMasterResponse{}
-	err := resp.Decode(bytes.NewBuffer(respbuffer[0:n]))
+	err := resp.Decode(bytes.NewBuffer(respbuffer[0:n]), n)
 	if err != nil {
 		return nil, err
 	}
 
-	servers := make([]Server, len(resp.ips))
+	servers := make([]Server, len(resp.Ips))
 
-	for i, ip := range resp.ips {
+	for i, ip := range resp.Ips {
 		servers[i] = iserver{addr: ip.String()}
 	}
 
@@ -216,33 +217,55 @@ func (m *master) Query(at string) ([]Server, error) {
 
 // Incoming IPs as represented on the wire.
 type wireIP struct {
-	oct struct {
-		o1,
-		o2,
-		o3,
-		o4 byte
+	Oct struct {
+		O1,
+		O2,
+		O3,
+		O4 byte
 	}
 	// ATCHTUNG!!! This is NETWORK BYTE ORDERED
 	// as defined by the spec.
-	port uint16
+	Port uint16
 }
 
 func (p wireIP) String() string {
 	return fmt.Sprintf("%d.%d.%d.%d:%d",
-		p.oct.o1, p.oct.o2, p.oct.o3, p.oct.o4, p.port)
+		p.Oct.O1, p.Oct.O2, p.Oct.O3, p.Oct.O4, p.Port)
 }
 
 type wireMasterResponse struct {
-	head struct {
-		magic [masterRespHeaderLength]byte
+	Head struct {
+		Magic [masterRespHeaderLength]byte
 	}
-	ips []wireIP
+	Ips []wireIP
 }
 
-func (r *wireMasterResponse) Decode(packet io.Reader) error {
-	err := binary.Read(packet, byteOrder, &r.head)
+func (r *wireMasterResponse) Decode(packet io.Reader, n int) error {
+	if r.Ips == nil {
+		r.Ips = make([]wireIP, 0, 50)
+	}
+
+	err := binary.Read(packet, byteOrder, &r.Head)
 	if err != nil {
 		return err
+	}
+
+	if !reflect.DeepEqual(r.Head.Magic, masterResponseHeader) {
+		return errors.New("Header does not match.")
+	}
+
+	remaining := n - binary.Size(r.Head.Magic)
+	ipsize := binary.Size(wireIP{})
+
+	for ; remaining >= ipsize; remaining -= ipsize {
+		ip := wireIP{}
+		if err := binary.Read(packet, byteOrder, &ip.Oct); err != nil {
+			return err
+		}
+		if err := binary.Read(packet, binary.BigEndian, &ip.Port); err != nil {
+			return err
+		}
+		r.Ips = append(r.Ips, ip)
 	}
 
 	return nil
