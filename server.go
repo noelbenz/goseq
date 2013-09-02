@@ -46,12 +46,12 @@ type Server interface {
 	// Ping returns the connection latency of a server.
 	Ping(timeout time.Duration) (time.Duration, error)
 	// Info returns the Source Info query result.
-	Info() (map[string]interface{}, error)
+	Info(timeout time.Duration) (map[string]interface{}, error)
 	// Players retrieves the players currently on a server.
-	Players() ([]Player, error)
+	Players(timeout time.Duration) ([]Player, error)
 	// Rules returns the server-defined rules of the server.
 	// These are mostly Convar settings.
-	Rules() ([]Rule, error)
+	Rules(timeout time.Duration) ([]Rule, error)
 	SetAddress(string) error
 }
 
@@ -68,11 +68,13 @@ type iserver struct {
 }
 
 // @TODO: Implement these
-func (serv *iserver) Address() string                       { return serv.addr }
-func (serv *iserver) Info() (map[string]interface{}, error) { return make(map[string]interface{}), nil }
-func (serv *iserver) Players() ([]Player, error)            { return nil, nil }
-func (serv *iserver) Rules() ([]Rule, error)                { return nil, nil }
-func (s *iserver) SetAddress(a string) error                { s.addr = a; s.remoteAddr = nil; return nil }
+func (serv *iserver) Address(timeout time.Duration) string { return serv.addr }
+func (serv *iserver) Info(timeout time.Duration) (map[string]interface{}, error) {
+	return make(map[string]interface{}), nil
+}
+func (serv *iserver) Players(timeout time.Duration) ([]Player, error) { return nil, nil }
+func (serv *iserver) Rules(timeout time.Duration) ([]Rule, error)     { return nil, nil }
+func (s *iserver) SetAddress(a string) error                          { s.addr = a; s.remoteAddr = nil; return nil }
 
 func (s *iserver) getConnection() (*net.UDPConn, error) {
 	if s.Address() == NoAddress {
