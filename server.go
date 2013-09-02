@@ -24,6 +24,7 @@ const (
 
 // Server represents a Source server.
 type Server interface {
+	Address() string
 	// Ping returns the connection latency of a server.
 	Ping(timeout time.Duration) (time.Duration, error)
 	// Info returns the Source Info query result.
