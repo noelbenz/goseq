@@ -9,17 +9,17 @@ import (
 type ServerType byte
 
 const (
-	DEDICATED ServerType = ServerType(byte('D'))
-	LISTEN    ServerType = ServerType(byte('L')) // "Non dedicated"
-	SOURCETV  ServerType = ServerType(byte('P'))
+	Dedicated ServerType = ServerType(byte('D'))
+	Listen    ServerType = ServerType(byte('L')) // "Non dedicated"
+	SourceTV  ServerType = ServerType(byte('P'))
 )
 
 // ServerEnvironment is the OS the server is running on.
 type ServerEnvironment byte
 
 const (
-	LINUX   ServerEnvironment = ServerEnvironment(byte('L'))
-	WINDOWS ServerEnvironment = ServerEnvironment(byte('W'))
+	Linux   ServerEnvironment = ServerEnvironment(byte('L'))
+	Windows ServerEnvironment = ServerEnvironment(byte('W'))
 )
 
 // Server represents a Source server.
@@ -35,6 +35,18 @@ type Server interface {
 	// These are mostly Convar settings.
 	Rules() ([]Rule, error)
 }
+
+// implementation of Server
+type iserver struct {
+	addr string
+}
+
+// @TODO: Implement these
+func (serv iserver) Address() string                                   { return serv.addr }
+func (serv iserver) Ping(timeout time.Duration) (time.Duration, error) { return time.Duration(0), nil }
+func (serv iserver) Info() (map[string]interface{}, error)             { return make(map[string]interface{}), nil }
+func (serv iserver) Players() ([]Player, error)                        { return nil, nil }
+func (serv iserver) Rules() ([]Rule, error)                            { return nil, nil }
 
 // binary form of the server packet
 type packetServer struct {
