@@ -52,6 +52,7 @@ type Server interface {
 	// Rules returns the server-defined rules of the server.
 	// These are mostly Convar settings.
 	Rules() ([]Rule, error)
+	SetAddress(string) error
 }
 
 func NewServer() Server {
@@ -66,13 +67,12 @@ type iserver struct {
 	remoteAddr *net.UDPAddr
 }
 
-func (s *iserver) setAddress(a string) { s.addr = a; s.remoteAddr = nil }
-
 // @TODO: Implement these
 func (serv *iserver) Address() string                       { return serv.addr }
 func (serv *iserver) Info() (map[string]interface{}, error) { return make(map[string]interface{}), nil }
 func (serv *iserver) Players() ([]Player, error)            { return nil, nil }
 func (serv *iserver) Rules() ([]Rule, error)                { return nil, nil }
+func (s *iserver) SetAddress(a string) error                { s.addr = a; s.remoteAddr = nil; return nil }
 
 func (s *iserver) getConnection() (*net.UDPConn, error) {
 	if s.Address() == NoAddress {
