@@ -1,7 +1,9 @@
 package goseq
 
 import (
+	"errors"
 	"io"
+	"net"
 	"time"
 )
 
@@ -22,6 +24,22 @@ const (
 	Windows ServerEnvironment = ServerEnvironment(byte('W'))
 )
 
+const (
+	// PayloadSize is the official packet-payload size
+	// of UDP headers.
+	PayloadSize int = 1400
+)
+
+const (
+	// NoAddress represents a address that has yet to be
+	// set by the server implementation.
+	NoAddress string = "address-not-set.example.org:0"
+)
+
+var (
+	NoAddressSet error = errors.New("The server does not have a remote address set.")
+)
+
 // Server represents a Source server.
 type Server interface {
 	Address() string
@@ -36,22 +54,54 @@ type Server interface {
 	Rules() ([]Rule, error)
 }
 
-// implementation of Server
-type iserver struct {
-	addr string
+func NewServer() Server {
+	return &iserver{
+		addr: NoAddress,
+	}
 }
 
+// implementation of Server
+type iserver struct {
+	addr       string
+	remoteAddr *net.UDPAddr
+}
+
+func (s *iserver) setAddress(a string) { s.addr = a; s.remoteAddr = nil }
+
 // @TODO: Implement these
-func (serv iserver) Address() string                                   { return serv.addr }
-func (serv iserver) Ping(timeout time.Duration) (time.Duration, error) { return time.Duration(0), nil }
-func (serv iserver) Info() (map[string]interface{}, error)             { return make(map[string]interface{}), nil }
-func (serv iserver) Players() ([]Player, error)                        { return nil, nil }
-func (serv iserver) Rules() ([]Rule, error)                            { return nil, nil }
+func (serv *iserver) Address() string                       { return serv.addr }
+func (serv *iserver) Info() (map[string]interface{}, error) { return make(map[string]interface{}), nil }
+func (serv *iserver) Players() ([]Player, error)            { return nil, nil }
+func (serv *iserver) Rules() ([]Rule, error)                { return nil, nil }
+
+func (s *iserver) getConnection() (*net.UDPConn, error) {
+	if s.Address() == NoAddress {
+		return nil, NoAddressSet
+	}
+	if s.remoteAddr == nil {
+		var err error
+		s.remoteAddr, err = net.ResolveUDPAddr("udp", s.addr)
+		if err != nil {
+			s.remoteAddr = nil
+			return nil, err
+		}
+	}
+	conn, err := net.DialUDP("udp", nil, s.remoteAddr)
+	if err != nil {
+		s.remoteAddr = nil
+		return nil, err
+	}
+	return conn, nil
+}
 
 // binary form of the server packet
 type packetServer struct {
+	Header struct {
+		Magic       [packetHeaderSz]byte
+		Designation byte // 0x49 "I"
+	}
 	// always present
-	std1 struct {
+	Std1 struct {
 		Header      byte
 		Protocol    byte
 		Name        string
@@ -68,18 +118,18 @@ type packetServer struct {
 		VAC         bool
 	}
 	// only if the game is The Ship (ID == 2400)
-	ship struct {
+	Ship struct {
 		Mode      byte
 		Witnesses uint8
 		Duration  uint8
 	}
 	// always present after the ship
-	std2 struct {
+	Std2 struct {
 		Version string
 		EDF     byte // Extra Data Flag
 	}
 	// fields that depend on the flags in EDF
-	extra struct {
+	Extra struct {
 		Port          uint16 // if EDF & 0x80
 		SteamID       uint64 // if EDF & 0x10
 		SpectatorPort uint16 // if EDF & 0x40

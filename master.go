@@ -52,8 +52,6 @@ var (
 	favored_server int = 2
 
 	MasterServerTimeout time.Duration = 5 * time.Second
-
-	err_timeout error = errors.New("Couldn't read from master server.")
 )
 
 var (
@@ -134,6 +132,7 @@ func (_ *master) ip2server(ip wireIP, serv *iserver) {
 	serv.addr = ip.String()
 }
 
+// try to write and read from the socket.
 func (m *master) try(request, buffer []byte) (error, int) {
 	timeout := make(chan bool, 1)
 	done := make(chan error, 1)
@@ -168,7 +167,7 @@ func (m *master) try(request, buffer []byte) (error, int) {
 	case e := <-done:
 		return e, n
 	case <-timeout:
-		return err_timeout, 0
+		return Timeout, 0
 	}
 }
 
@@ -182,13 +181,13 @@ func (m *master) Query(at string) ([]Server, error) {
 	start_indice := m.master_index
 	for {
 		e, n = m.try(reqpacket, respbuffer[0:])
-		if e == err_timeout {
+		if e == Timeout {
 			m.master_index = (m.master_index + 1) % len(MasterSourceServers)
 			m.addr = MasterSourceServers[m.master_index]
 
 			if m.master_index == start_indice {
 				// we've come full circle, time to quit.
-				return nil, err_timeout
+				return nil, Timeout
 			}
 
 			favored_server = m.master_index
@@ -209,7 +208,7 @@ func (m *master) Query(at string) ([]Server, error) {
 	servers := make([]Server, len(resp.Ips))
 
 	for i, ip := range resp.Ips {
-		servers[i] = iserver{addr: ip.String()}
+		servers[i] = &iserver{addr: ip.String()}
 	}
 
 	return servers, nil
@@ -240,6 +239,7 @@ type wireMasterResponse struct {
 	Ips []wireIP
 }
 
+// Decode fills the packet withinformation of the packet.
 func (r *wireMasterResponse) Decode(packet io.Reader, n int) error {
 	if r.Ips == nil {
 		r.Ips = make([]wireIP, 0, 50)
@@ -259,9 +259,11 @@ func (r *wireMasterResponse) Decode(packet io.Reader, n int) error {
 
 	for ; remaining >= ipsize; remaining -= ipsize {
 		ip := wireIP{}
+		// Normal little endian read.
 		if err := binary.Read(packet, byteOrder, &ip.Oct); err != nil {
 			return err
 		}
+		// Seperate read because of big endian requirement
 		if err := binary.Read(packet, binary.BigEndian, &ip.Port); err != nil {
 			return err
 		}
