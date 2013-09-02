@@ -18,6 +18,7 @@ type Filter interface {
 	Get(key string) (interface{}, error)
 	Has(key string) bool
 	Keys() []string
+	Delete(key string)
 	GetFilterFormat() []byte
 }
 
@@ -55,6 +56,10 @@ func (fil *msfilter) Has(key string) bool {
 		return false
 	}
 	return true
+}
+
+func (fil *msfilter) Delete(key string) {
+	delete(fil.parameters, key)
 }
 
 func (fil *msfilter) Keys() []string {
