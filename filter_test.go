@@ -267,9 +267,6 @@ func TestFilter_GetFilterFormat_multi(t *testing.T) {
 			continue
 		}
 
-		t.Log("key", key)
-		t.Log("val", remap[key])
-
 		reassembled = append(reassembled, key)
 		reassembled = append(reassembled, remap[key])
 	}
