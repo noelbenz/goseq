@@ -1,8 +1,10 @@
 package goseq
 
 import (
+	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 )
 
@@ -173,4 +175,115 @@ func TestFilter_Keys(t *testing.T) {
 	if !reflect.DeepEqual(sortedActual, sortedReported) {
 		t.Log("Array keys are not the same!")
 	}
+}
+
+func TestFilter_GetFilterFormat_string(t *testing.T) {
+	fil, _ := testFilterSuite(map[string]interface{}{"key": "value"})
+	expected := "\\key\\value\x00"
+	if string(fil.GetFilterFormat()) != expected {
+		t.Log("String not serialized correctly!")
+		t.FailNow()
+	}
+}
+
+func TestFilter_GetFilterFormat_boolt(t *testing.T) {
+	fil, _ := testFilterSuite(map[string]interface{}{"keybool": true})
+	expected := "\\keybool\\1\x00"
+	if string(fil.GetFilterFormat()) != expected {
+		t.Log("Bool:True not serialized correctly!")
+		t.FailNow()
+	}
+}
+
+func TestFilter_GetFilterFormat_boolf(t *testing.T) {
+	fil, _ := testFilterSuite(map[string]interface{}{"keyboolfalse": false})
+	expected := "\\keyboolfalse\\0\x00"
+	if string(fil.GetFilterFormat()) != expected {
+		t.Log("Bool:False not serialized correctly!")
+		t.FailNow()
+	}
+}
+
+func TestFilter_GetFilterFormat_int(t *testing.T) {
+	fil, _ := testFilterSuite(map[string]interface{}{"keyint": 382634})
+	expected := "\\keyint\\382634\x00"
+	if string(fil.GetFilterFormat()) != expected {
+		t.Log("Int not serialized correctly!")
+		t.FailNow()
+	}
+}
+
+func TestFilter_GetFilterFormat_multi(t *testing.T) {
+	fil, _ := testFilterSuite(map[string]interface{}{
+		"keyint":    382634,
+		"keybool":   true,
+		"keystring": "lol wat?",
+	})
+
+	expected := "\\keybool\\1\\keyint\\382634\\keystring\\lol wat?\x00"
+
+	// need to extract and sort since
+	// order is not important
+	rawFmt := fil.GetFilterFormat()
+
+	if rawFmt[0] != byte('\\') {
+		t.Log("Multi Fmt not formatted correctly.")
+		t.FailNow()
+	}
+
+	if rawFmt[len(rawFmt)-1] != 0x0 {
+		t.Log("Filter string must be NULL terminated.")
+		t.FailNow()
+	}
+
+	rawFmt = rawFmt[:len(rawFmt)-1] // remove trailing null temporarily
+
+	parts := strings.Split(string(rawFmt), "\\")[1:] // 1st is blank
+
+	remap := make(map[string]string)
+	keys := make([]string, len(parts))
+
+	if len(parts)%2 != 0 {
+		t.Log("Odd number of objects (missing a key or value): malformatted.")
+		t.FailNow()
+	}
+
+	for i := 0; i < len(parts); i += 2 {
+		key := parts[i]
+		val := parts[i+1]
+
+		keys = append(keys, key)
+		remap[key] = val
+	}
+
+	sorted := sort.StringSlice(keys)
+	sorted.Sort()
+
+	reassembled := make([]string, 0)
+
+	for _, key := range sorted {
+		// catch the blanks between \
+		if key == "" {
+			continue
+		}
+
+		t.Log("key", key)
+		t.Log("val", remap[key])
+
+		reassembled = append(reassembled, key)
+		reassembled = append(reassembled, remap[key])
+	}
+
+	joined := strings.Join(reassembled, "\\")
+
+	sortedFilterOutput := fmt.Sprintf("\\%v\x00", joined)
+
+	if expected != sortedFilterOutput {
+		t.Log("Filter with multi-keys is not formatted correctly.")
+		t.Log("Expected:", expected)
+		t.Log("Got:", sortedFilterOutput)
+		t.Log("Raw:", string(fil.GetFilterFormat()))
+		t.FailNow()
+	}
+
 }
