@@ -2,7 +2,6 @@ package goseq
 
 import (
 	"errors"
-	"io"
 	"net"
 	"time"
 )
@@ -25,12 +24,6 @@ const (
 )
 
 const (
-	// PayloadSize is the official packet-payload size
-	// of UDP headers.
-	PayloadSize int = 1400
-)
-
-const (
 	// NoAddress represents a address that has yet to be
 	// set by the server implementation.
 	NoAddress string = "address-not-set.example.org:0"
@@ -46,7 +39,7 @@ type Server interface {
 	// Ping returns the connection latency of a server.
 	Ping(timeout time.Duration) (time.Duration, error)
 	// Info returns the Source Info query result.
-	Info(timeout time.Duration) (map[string]interface{}, error)
+	Info(timeout time.Duration) (ServerInfo, error)
 	// Players retrieves the players currently on a server.
 	Players(timeout time.Duration) ([]Player, error)
 	// Rules returns the server-defined rules of the server.
@@ -68,10 +61,7 @@ type iserver struct {
 }
 
 // @TODO: Implement these
-func (serv *iserver) Address(timeout time.Duration) string { return serv.addr }
-func (serv *iserver) Info(timeout time.Duration) (map[string]interface{}, error) {
-	return make(map[string]interface{}), nil
-}
+func (serv *iserver) Address() string                                 { return serv.addr }
 func (serv *iserver) Players(timeout time.Duration) ([]Player, error) { return nil, nil }
 func (serv *iserver) Rules(timeout time.Duration) ([]Rule, error)     { return nil, nil }
 func (s *iserver) SetAddress(a string) error                          { s.addr = a; s.remoteAddr = nil; return nil }
@@ -94,58 +84,4 @@ func (s *iserver) getConnection() (*net.UDPConn, error) {
 		return nil, err
 	}
 	return conn, nil
-}
-
-// binary form of the server packet
-type packetServer struct {
-	Header struct {
-		Magic       [packetHeaderSz]byte
-		Designation byte // 0x49 "I"
-	}
-	// always present
-	Std1 struct {
-		Header      byte
-		Protocol    byte
-		Name        string
-		Map         string
-		Folder      string
-		Game        string
-		ID          int16 // App ID of game
-		Players     uint8
-		MaxPlayers  uint8
-		Bots        uint8
-		Servertype  ServerType
-		Environment byte
-		Visibility  byte
-		VAC         bool
-	}
-	// only if the game is The Ship (ID == 2400)
-	Ship struct {
-		Mode      byte
-		Witnesses uint8
-		Duration  uint8
-	}
-	// always present after the ship
-	Std2 struct {
-		Version string
-		EDF     byte // Extra Data Flag
-	}
-	// fields that depend on the flags in EDF
-	Extra struct {
-		Port          uint16 // if EDF & 0x80
-		SteamID       uint64 // if EDF & 0x10
-		SpectatorPort uint16 // if EDF & 0x40
-		SpectatorName string // if EDF & 0x40
-		Keywords      string // if EDF & 0x20
-		GameID        uint64 // if  EDF & 0x01
-	}
-}
-
-func (_ *packetServer) Identifier() byte {
-	return 0x49 // "I"
-}
-
-func (p *packetServer) Decode(stream io.Reader) error {
-	//@TODO(hunter): implement :)
-	return nil
 }
