@@ -199,14 +199,3 @@ func (p *ServerInfo) decode(stream *bytes.Buffer) (err error) {
 	}
 	return nil
 }
-
-// Read a c string from the buffer
-// and return a go-string without the NULL
-// terminator
-func rcstr(buf *bytes.Buffer) (string, error) {
-	str, err := buf.ReadString(0x0)
-	if err != nil {
-		return "", err
-	}
-	return str[:len(str)-1], nil
-}

@@ -44,7 +44,7 @@ type Server interface {
 	Players(timeout time.Duration) ([]Player, error)
 	// Rules returns the server-defined rules of the server.
 	// These are mostly Convar settings.
-	Rules(timeout time.Duration) ([]Rule, error)
+	Rules(timeout time.Duration) (RuleMap, error)
 	SetAddress(string) error
 }
 
@@ -63,7 +63,6 @@ type iserver struct {
 // @TODO: Implement these
 func (serv *iserver) Address() string                                 { return serv.addr }
 func (serv *iserver) Players(timeout time.Duration) ([]Player, error) { return nil, nil }
-func (serv *iserver) Rules(timeout time.Duration) ([]Rule, error)     { return nil, nil }
 func (s *iserver) SetAddress(a string) error                          { s.addr = a; s.remoteAddr = nil; return nil }
 
 func (s *iserver) getConnection() (*net.UDPConn, error) {
@@ -84,4 +83,8 @@ func (s *iserver) getConnection() (*net.UDPConn, error) {
 		return nil, err
 	}
 	return conn, nil
+}
+
+type wrChallengeResponse struct {
+	Magic [4]byte
 }

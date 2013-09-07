@@ -19,7 +19,7 @@ func (s *iserver) Ping(timeout time.Duration) (time.Duration, error) {
 	timer := make(chan bool)
 	done := make(chan time.Duration)
 
-	request := [...]byte{0xFF, 0xFF, 0xFF, 0xFF, 0x69}
+	request := append(packetHeader[0:], 0x69)
 	response := make([]byte, binary.Size(pingPacket{}))
 	n := 0
 

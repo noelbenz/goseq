@@ -21,6 +21,7 @@ const (
 )
 
 var (
+	PacketHeaderErr     error = errors.New("Packet does not have expected header identifier byte.")
 	PacketMalformed     error = errors.New("Packet appears malformed.")
 	PayloadSizeMismatch error = errors.New("Decompressed payload is not expected size.")
 	PayloadCRC32Fail    error = errors.New("CRC validation failed on decompressed payload. Possible corruption?")
@@ -212,4 +213,15 @@ func (st *packetStream) contiguous_payload() []byte {
 	}
 
 	return contiguous
+}
+
+// Read a c string from the buffer
+// and return a go-string without the NULL
+// terminator
+func rcstr(buf *bytes.Buffer) (string, error) {
+	str, err := buf.ReadString(0x0)
+	if err != nil {
+		return str, err
+	}
+	return str[:len(str)-1], nil
 }
