@@ -10,7 +10,21 @@ import (
 // convar settings for the server.
 type RuleMap map[string]string
 
-func (serv *iserver) Rules(timeout time.Duration) (rmap RuleMap, err error) {
+func (serv *iserver) Rules(limit time.Duration) (rmap RuleMap, err error) {
+	timer := time.NewTimer(limit)
+	done := make(chan bool)
+
+	go func() { rmap, err = serv.get_rules(); done <- true }()
+
+	select {
+	case <-timer.C:
+		return nil, Timeout
+	case <-done:
+		return
+	}
+}
+
+func (serv *iserver) get_rules() (rmap RuleMap, err error) {
 	rmap = newRuleMap()
 	var challenge int32
 
