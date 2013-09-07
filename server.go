@@ -60,10 +60,8 @@ type iserver struct {
 	remoteAddr *net.UDPAddr
 }
 
-// @TODO: Implement these
-func (serv *iserver) Address() string                                 { return serv.addr }
-func (serv *iserver) Players(timeout time.Duration) ([]Player, error) { return nil, nil }
-func (s *iserver) SetAddress(a string) error                          { s.addr = a; s.remoteAddr = nil; return nil }
+func (serv *iserver) Address() string        { return serv.addr }
+func (s *iserver) SetAddress(a string) error { s.addr = a; s.remoteAddr = nil; return nil }
 
 func (s *iserver) getConnection() (*net.UDPConn, error) {
 	if s.Address() == NoAddress {

@@ -50,7 +50,28 @@ func (s *iserver) getChallenge(rqtype byte) (ch int32, err error) {
 	return
 }
 
+type wrappedChallenge struct {
+	Magic [4]byte
+	challenge
+}
+
 type challenge struct {
 	Type      byte
 	Challenge int32
+}
+
+// Utility function to wrap challenges and turn it into
+// a byte array for sending.
+func newWrappedChallengeBA(chalType byte, chalValue int32) []byte {
+	chal := wrappedChallenge{
+		Magic: [4]byte{0xFF, 0xFF, 0xFF, 0xFF},
+		challenge: challenge{
+			Type:      chalType,
+			Challenge: chalValue,
+		},
+	}
+
+	buf := bytes.NewBuffer(make([]byte, 0, 9))
+	binary.Write(buf, byteOrder, chal)
+	return buf.Bytes()
 }
