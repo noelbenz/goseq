@@ -129,7 +129,7 @@ func (m *master) makerequest(ip string) []byte {
 // performs no allocations to keep it fast
 // iterating over hundreds of servers.
 func (_ *master) ip2server(ip wireIP, serv *iserver) {
-	serv.addr = ip.String()
+	serv.src.setAddress(ip.String())
 }
 
 // try to write and read from the socket.
@@ -207,8 +207,11 @@ func (m *master) Query(at string) ([]Server, error) {
 
 	servers := make([]Server, len(resp.Ips))
 
+	var iterated_server Server
 	for i, ip := range resp.Ips {
-		servers[i] = &iserver{addr: ip.String()}
+		iterated_server = NewServer()
+		iterated_server.SetAddress(ip.String())
+		servers[i] = iterated_server
 	}
 
 	return servers, nil

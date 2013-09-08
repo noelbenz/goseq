@@ -2,7 +2,7 @@ package goseq
 
 import (
 	"errors"
-	"net"
+	"io"
 	"time"
 )
 
@@ -48,39 +48,24 @@ type Server interface {
 	SetAddress(string) error
 }
 
+// NewServer returns a Server that uses the network
+// as its data source.
 func NewServer() Server {
 	return &iserver{
-		addr: NoAddress,
+		src: &sourceRemote{},
 	}
 }
 
 // implementation of Server
 type iserver struct {
-	addr       string
-	remoteAddr *net.UDPAddr
+	src source
 }
 
-func (serv *iserver) Address() string        { return serv.addr }
-func (s *iserver) SetAddress(a string) error { s.addr = a; s.remoteAddr = nil; return nil }
+func (serv *iserver) Address() string        { return serv.src.address() }
+func (s *iserver) SetAddress(a string) error { return s.src.setAddress(a) }
 
-func (s *iserver) getConnection() (*net.UDPConn, error) {
-	if s.Address() == NoAddress {
-		return nil, NoAddressSet
-	}
-	if s.remoteAddr == nil {
-		var err error
-		s.remoteAddr, err = net.ResolveUDPAddr("udp", s.addr)
-		if err != nil {
-			s.remoteAddr = nil
-			return nil, err
-		}
-	}
-	conn, err := net.DialUDP("udp", nil, s.remoteAddr)
-	if err != nil {
-		s.remoteAddr = nil
-		return nil, err
-	}
-	return conn, nil
+func (s *iserver) getConnection() (io.ReadWriteCloser, error) {
+	return s.src.connection()
 }
 
 type wrChallengeResponse struct {
