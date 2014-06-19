@@ -123,6 +123,33 @@ type ServerInfo struct {
 	wrInfExtra
 }
 
+func (s *ServerInfo) GetName() string   { return s.wrInfStd2.Name }
+func (s *ServerInfo) GetMap() string    { return s.wrInfStd2.Map }
+func (s *ServerInfo) GetFolder() string { return s.wrInfStd2.Folder }
+func (s *ServerInfo) GetGame() string   { return s.wrInfStd2.Game }
+
+func (s *ServerInfo) GetID() int16              { return s.wrInfStd3.ID }
+func (s *ServerInfo) GetPlayers() uint8         { return s.wrInfStd3.Players }
+func (s *ServerInfo) GetMaxPlayers() uint8      { return s.wrInfStd3.MaxPlayers }
+func (s *ServerInfo) GetBots() uint8            { return s.wrInfStd3.Bots }
+func (s *ServerInfo) GetServertype() ServerType { return s.wrInfStd3.Servertype }
+func (s *ServerInfo) GetEnvironment() byte      { return s.wrInfStd3.Environment }
+func (s *ServerInfo) GetVisibility() byte       { return s.wrInfStd3.Visibility }
+func (s *ServerInfo) GetVAC() byte              { return s.wrInfStd3.VAC }
+
+func (s *ServerInfo) GetMode() byte       { return s.wrInfShip.Mode }
+func (s *ServerInfo) GetWitnesses() uint8 { return s.wrInfShip.Witnesses }
+func (s *ServerInfo) GetDuration() uint8  { return s.wrInfShip.Duration }
+
+func (s *ServerInfo) GetVersion() string { return s.wrInfStd4.Version }
+
+func (s *ServerInfo) GetPort() uint16          { return s.wrInfExtra.Port }
+func (s *ServerInfo) GetSteamID() uint64       { return s.wrInfExtra.SteamID }
+func (s *ServerInfo) GetSpectatorPort() uint16 { return s.wrInfExtra.SpectatorPort }
+func (s *ServerInfo) GetSpectatorName() string { return s.wrInfExtra.SpectatorName }
+func (s *ServerInfo) GetKeywords() string      { return s.wrInfExtra.Keywords }
+func (s *ServerInfo) GetGameID() uint64        { return s.wrInfExtra.GameID }
+
 func NewServerInfo() ServerInfo {
 	return ServerInfo{}
 }
