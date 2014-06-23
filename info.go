@@ -133,9 +133,11 @@ func (s *ServerInfo) GetPlayers() uint8         { return s.wrInfStd3.Players }
 func (s *ServerInfo) GetMaxPlayers() uint8      { return s.wrInfStd3.MaxPlayers }
 func (s *ServerInfo) GetBots() uint8            { return s.wrInfStd3.Bots }
 func (s *ServerInfo) GetServertype() ServerType { return s.wrInfStd3.Servertype }
-func (s *ServerInfo) GetEnvironment() byte      { return s.wrInfStd3.Environment }
-func (s *ServerInfo) GetVisibility() byte       { return s.wrInfStd3.Visibility }
-func (s *ServerInfo) GetVAC() byte              { return s.wrInfStd3.VAC }
+func (s *ServerInfo) GetEnvironment() ServerEnvironment {
+	return ServerEnvironment(s.wrInfStd3.Environment)
+}
+func (s *ServerInfo) GetVisibility() byte { return s.wrInfStd3.Visibility }
+func (s *ServerInfo) GetVAC() byte        { return s.wrInfStd3.VAC }
 
 func (s *ServerInfo) GetMode() byte       { return s.wrInfShip.Mode }
 func (s *ServerInfo) GetWitnesses() uint8 { return s.wrInfShip.Witnesses }
