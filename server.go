@@ -19,8 +19,9 @@ const (
 type ServerEnvironment byte
 
 const (
-	Linux   ServerEnvironment = ServerEnvironment(byte('L'))
-	Windows ServerEnvironment = ServerEnvironment(byte('W'))
+	Linux   ServerEnvironment = ServerEnvironment(byte('l'))
+	Windows ServerEnvironment = ServerEnvironment(byte('w'))
+	Mac     ServerEnvironment = ServerEnvironment(byte('o'))
 )
 
 const (
